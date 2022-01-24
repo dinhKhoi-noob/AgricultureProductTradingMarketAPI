@@ -1,10 +1,14 @@
 let mysql = require('mysql2');
+require("dotenv").config();
+
+const {DB_HOST, DB_USERNAME, DB_PASSWORD} = process.env;
 
 let connection = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: "EcommerceJS"
+    host: DB_HOST,
+    user: DB_USERNAME,
+    password: DB_PASSWORD,
+    port: "3306",
+    database: "apm_db"
 });
 
 connection.connect(function (err) {
