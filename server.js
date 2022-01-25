@@ -7,7 +7,9 @@ app.get('/',(req,res)=>{
 })
 
 app.use('/api/user',userRoute);
-
+app.get('/test',(req,res)=>{
+    res.json({success:true,message:"Test successfully"})
+})
 app.listen(4000,()=>{
     console.log('listening on port 4000\nhttp://localhost:4000');
 })
