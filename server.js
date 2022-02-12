@@ -7,7 +7,6 @@ require("dotenv").config();
 app.get("/", (req, res) => {
   res.send("Hello world");
 });
-
 app.use("/api/user", userRoute);
 app.use("/api/upload", uploadRoute);
 app.get("/test", (req, res) => {
