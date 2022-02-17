@@ -17,8 +17,8 @@ const dropTable = (tableName) => {
 
 const dropTables = () => {
   let tableNameListReverse = tableNameList.reverse();
-  tableNameListReverse.forEach((table) => {
-    console.log(table)
+  tableNameListReverse.forEach((table,index) => {
+    console.log(index);
     dropTable(table);
   });
 };

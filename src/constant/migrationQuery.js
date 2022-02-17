@@ -240,7 +240,7 @@ const queryStringList = {
     FOREIGN KEY(room_id) REFERENCES chat_room(id), 
     FOREIGN KEY(sent_by) REFERENCES user(id) 
   )`,
-  message_file: `CREATE TABLE file( 
+  message_file: `CREATE TABLE message_file( 
     id varchar(10) primary key, 
     message_id varchar(10), 
     content_type varchar(10), 

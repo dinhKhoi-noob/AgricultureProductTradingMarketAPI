@@ -19,7 +19,8 @@ const migrateTable = (tableName) => {
 };
 
 const migrate = () => {
-  tableNameList.forEach((table) => {
+  tableNameList.forEach((table,index) => {
+    console.log(index)
     migrateTable(table);
   });
 };
