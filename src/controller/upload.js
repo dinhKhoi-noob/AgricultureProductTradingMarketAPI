@@ -6,32 +6,35 @@ const randomString = require("randomstring");
 const connection = require("../model/connection");
 
 const upload = multer({
-  storage: multerS3({
-    s3,
-    bucket: "apm-bucket-01",
-    contentType: multerS3.AUTO_CONTENT_TYPE,
-    metadata: (req, file, cb) => {
-      cb(null, { fieldName: file.fieldname });
-    },
-    key: (req, file, cb) => {
-      cb(null, Date.now().toString());
-    },
-  }),
+    storage: multerS3({
+        s3,
+        bucket: "apm-bucket-01",
+        contentType: multerS3.AUTO_CONTENT_TYPE,
+        metadata: (req, file, cb) => {
+            cb(null, { fieldName: file.fieldname });
+        },
+        key: (req, file, cb) => {
+            cb(null, Date.now().toString() + randomString.generate(10));
+        },
+    }),
 });
 
-router.post("/image", upload.single("image"), (req, res) => {
-  try {
-    const id = randomString.generate(10);
-    connection.query(
-      `insert into test(id, url) values ('${id}','${req.file.location}')`
-    );
-    return res.status(201).json({ success: true });
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
-  }
+router.post("/single", upload.single("data"), (req, res) => {
+    try {
+        return res.status(201).json({ success: true, url: req.file.location });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
+
+router.post("/multi", upload.array("data", 4), (req, res) => {
+    try {
+        return res.status(201).json({ success: true, files: req.files });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
 });
 
 module.exports = router;
