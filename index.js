@@ -7,12 +7,15 @@ const uploadRoute = require("./src/controller/upload");
 const categoryRoute = require("./src/controller/productCategory");
 const productRoute = require("./src/controller/product");
 const businessProductTypeRoute = require("./src/controller/businessProductType");
-const buyingRequestRoute = require("./src/controller/buyingRequest");
+const requestForAnotherRequestRoute = require("./src/controller/requestForAnotherRequest");
 const imageRoute = require("./src/controller/image");
+const addressRoute = require("./src/controller/address");
+const ratingRoute = require("./src/controller/rating");
+const chatRoute = require("./src/controller/chat");
+const orderRoute = require("./src/controller/order");
 const migrateRoute = require("./src/model/migration");
 const droppingRoute = require("./src/model/dropping");
 const app = express();
-
 const { PORT } = process.env;
 const server = http.createServer(app);
 
@@ -23,36 +26,16 @@ const corsOption = {
 };
 app.use(cors(corsOption));
 require("dotenv").config();
+
 const io = require("socket.io")(server, {
-    cors: corsOption,
+    cors: {
+        cors: {
+            origin: [`http://localhost:3000`, "https://agriculture-product-trading-market-ui.vercel.app"],
+        },
+    },
 });
 
-io.use((socket, next) => {
-    const uid = socket.handshake.auth.uid;
-    if (uid) {
-        socket.uid = uid;
-        next();
-    }
-});
-
-io.on("connection", socket => {
-    const users = [];
-    for (let [id, socket] of io.of("/").sockets) {
-        users.push({ uid: socket.uid, socketId: id });
-    }
-    socket.emit("users", users);
-    socket.broadcast.emit("user connected", {
-        socketId: socket.id,
-        uid: socket.uid,
-    });
-    socket.on("private message", ({ content, to }) => {
-        socket.to(to).emit("private message", {
-            content,
-            from: socket.id,
-        });
-    });
-});
-
+require("./src/socket/socket")(io, app);
 app.get("/", (req, res) => {
     res.send("Hello world hihi");
 });
@@ -67,8 +50,12 @@ app.use("/api/upload", uploadRoute);
 app.use("/api/category", categoryRoute);
 app.use("/api/product", productRoute);
 app.use("/api/business_product_type", businessProductTypeRoute);
-app.use("/api/buying_request", buyingRequestRoute);
+app.use("/api/subrequest", requestForAnotherRequestRoute);
 app.use("/api/image", imageRoute);
+app.use("/api/address", addressRoute);
+app.use("/api/rating", ratingRoute);
+app.use("/api/chat", chatRoute);
+app.use("/api/order", orderRoute);
 app.get("/test", (req, res) => {
     res.json({ success: true, message: "Test successfully" });
 });

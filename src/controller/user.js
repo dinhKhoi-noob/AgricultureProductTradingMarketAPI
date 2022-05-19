@@ -1,6 +1,7 @@
 require("dotenv").config();
 require("../middleware/passport");
 const router = require("express").Router();
+const randomString = require("randomstring");
 const jsonResponse = require("../constant/jsonResponse");
 const {
     nullCheckForRegisteration,
@@ -24,6 +25,22 @@ const registerToken = id => {
         ACCESS_TOKEN_SECRET
     );
 };
+
+router.get("/", (req, res) => {
+    const { NOT_FOUND, GET_SUCCESS, SERVER_ERROR } = jsonResponse;
+    const { role } = req.query;
+    const selectQuery = `Select * from user where 1 ${role ? `and role_id like '${role}'` : ""}`;
+    connection.query(selectQuery, (err, result) => {
+        if (err) {
+            console.log(err);
+            return res.status(SERVER_ERROR.status).json({ success: false, message: SERVER_ERROR.message });
+        }
+        if (result && result.length === 0) {
+            return res.status(NOT_FOUND.status).json({ success: false, message: NOT_FOUND.message });
+        }
+        return res.status(GET_SUCCESS.status).json({ success: true, message: GET_SUCCESS.message, result });
+    });
+});
 
 router.get("/:uid", (req, res) => {
     const { GET_SUCCESS, SERVER_ERROR, NOT_FOUND } = jsonResponse;
@@ -78,10 +95,16 @@ router.post("/login", nullCheckForLogin, (req, res) => {
     const { GET_SUCCESS, SERVER_ERROR, NOT_FOUND, BAD_REQUEST } = jsonResponse;
     const { username, password } = req.body;
     try {
-        const selectQueryString = `Select id, username, email, password, phone, address from user 
+        const selectQueryString = `Select is_active,id, username, email, password, phone, address from user 
             where username like '${username}'`;
         connection.query(selectQueryString, async (err, result) => {
             if (result && result.length > 0) {
+                console.log(result[0]);
+                if (result[0].is_active !== 0) {
+                    return res
+                        .status(BAD_REQUEST.status)
+                        .json({ success: false, message: "Tài khoản của bạn đã bị vô hiệu hoá" });
+                }
                 const isValidPassword = await bcrypt.compare(password, result[0].password);
                 if (isValidPassword) {
                     const token = registerToken(result[0].id);
@@ -96,6 +119,38 @@ router.post("/login", nullCheckForLogin, (req, res) => {
     } catch (error) {
         return res.status(SERVER_ERROR.status).json({ success: false, message: SERVER_ERROR.message });
     }
+});
+
+router.post("/create", nullCheckForRegisteration, existedUser, async (req, res) => {
+    const bcrypt = require("bcryptjs");
+    const { SERVER_ERROR, POST_SUCCESS } = jsonResponse;
+    const { username, password, address, email, phone, role_id } = req.body;
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const id = randomString.generate(10);
+    const registerQueryString = `Insert into user(id, username, password, role_id, is_logged_in, login_method, email, address, phone) 
+            values('${id}', '${username}','${hashedPassword}','${role_id}', 0, 'default','${email}','${address}','${phone}')`;
+    connection.query(registerQueryString, (err, result) => {
+        if (err) {
+            return res.status(SERVER_ERROR.status).json({ success: false, message: "Lỗi hệ thống" });
+        }
+        return res.status(POST_SUCCESS.status).json({ success: true, message: POST_SUCCESS.message });
+    });
+});
+
+router.patch("/status/:id", (req, res) => {
+    const { status } = req.body;
+    const { id } = req.params;
+    const { SERVER_ERROR, POST_SUCCESS } = jsonResponse;
+    const updateQuery = `Update user set is_active = ${status} where id like '${id}'`;
+    console.log(updateQuery);
+    connection.query(updateQuery, (err, result) => {
+        if (err) {
+            console.log(err);
+            return res.status(SERVER_ERROR.status).json({ success: false, message: SERVER_ERROR.message });
+        }
+        return res.status(POST_SUCCESS.status).json({ success: true, message: POST_SUCCESS.message });
+    });
 });
 
 router.get(

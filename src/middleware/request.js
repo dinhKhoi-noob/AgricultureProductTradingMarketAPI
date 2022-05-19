@@ -1,10 +1,10 @@
 const jsonResponse = require("../constant/jsonResponse");
 const connection = require("../model/connection");
 
-const checkPostBuyingRequest = (req, res, next) => {
+const checkPostRequest = (req, res, next) => {
     const { uid } = req.params;
     const { BAD_REQUEST, NOT_FOUND } = jsonResponse;
-    const { productId, price, quantity, measure, desc, expiredDate } = req.body;
+    const { productId, price, quantity, measure, desc, expiredDate, productName, address } = req.body;
     if (
         !uid ||
         uid === "" ||
@@ -18,7 +18,11 @@ const checkPostBuyingRequest = (req, res, next) => {
         measure === "" ||
         !desc ||
         desc === "" ||
-        !expiredDate
+        !expiredDate ||
+        productName === "" ||
+        !productName ||
+        address === "" ||
+        !address
     ) {
         return res.status(BAD_REQUEST.status).json({ success: false, message: BAD_REQUEST.message });
     }
@@ -42,4 +46,4 @@ const checkPostBuyingRequest = (req, res, next) => {
     });
 };
 
-module.exports = { checkPostBuyingRequest };
+module.exports = { checkPostRequest };
